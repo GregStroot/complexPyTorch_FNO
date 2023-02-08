@@ -5,7 +5,7 @@
 @author: spopoff
 """
 
-from torch.nn.functional import relu, max_pool2d, avg_pool2d, dropout, dropout2d, interpolate, sigmoid, tanh
+from torch.nn.functional import gelu, relu, max_pool2d, avg_pool2d, dropout, dropout2d, interpolate, sigmoid, tanh
 import torch
 
 def complex_matmul(A, B):
@@ -40,8 +40,8 @@ def complex_normalize(input):
 def complex_relu(input):
     return relu(input.real).type(torch.complex64)+1j*relu(input.imag).type(torch.complex64)
 
-def complex_relu(input):
-    return relu(input.real).type(torch.complex64)+1j*relu(input.imag).type(torch.complex64)
+def complex_gelu(input):
+    return gelu(input.real).type(torch.complex64)+1j*gelu(input.imag).type(input.dtype)
 
 def complex_sigmoid(input):
     return sigmoid(input.real).type(torch.complex64)+1j*sigmoid(input.imag).type(torch.complex64)

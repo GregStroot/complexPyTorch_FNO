@@ -11,12 +11,13 @@ Based on https://openreview.net/forum?id=H1T2hmZAb
 
 import torch
 from torch.nn import Module, Parameter, init
-from torch.nn import Conv2d, Linear, BatchNorm1d, BatchNorm2d
+from torch.nn import Conv2d, Linear, BatchNorm1d, BatchNorm2d, Conv1d
 from torch.nn import ConvTranspose2d
-from .complexFunctions import complex_relu, complex_max_pool2d, complex_avg_pool2d
+from .complexFunctions import complex_gelu, complex_relu, complex_max_pool2d, complex_avg_pool2d
 from .complexFunctions import complex_dropout, complex_dropout2d
 
 def apply_complex(fr, fi, input, dtype = torch.complex64):
+
     return (fr(input.real)-fi(input.imag)).type(dtype) \
             + 1j*(fr(input.imag)+fi(input.real)).type(dtype)
 
@@ -83,6 +84,11 @@ class ComplexReLU(Module):
 
      def forward(self,input):
          return complex_relu(input)
+
+class ComplexGeLU(Module):
+
+     def forward(self,input):
+         return complex_gelu(input)
     
 class ComplexSigmoid(Module):
 
@@ -110,6 +116,17 @@ class ComplexConvTranspose2d(Module):
     def forward(self,input):
         return apply_complex(self.conv_tran_r, self.conv_tran_i, input)
 
+class ComplexConv1d(Module):
+
+    def __init__(self,in_channels, out_channels, kernel_size=3, stride=1, padding = 0,
+                 dilation=1, groups=1, bias=True):
+        super(ComplexConv1d, self).__init__()
+        self.conv_r = Conv1d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias).to(torch.float64)
+        self.conv_i = Conv1d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias).to(torch.float64)
+        
+    def forward(self,input):    
+        return apply_complex(self.conv_r, self.conv_i, input, dtype = input.dtype)
+
 class ComplexConv2d(Module):
 
     def __init__(self,in_channels, out_channels, kernel_size=3, stride=1, padding = 0,
@@ -125,11 +142,11 @@ class ComplexLinear(Module):
 
     def __init__(self, in_features, out_features):
         super(ComplexLinear, self).__init__()
-        self.fc_r = Linear(in_features, out_features)
-        self.fc_i = Linear(in_features, out_features)
+        self.fc_r = Linear(in_features, out_features).to(torch.float64)
+        self.fc_i = Linear(in_features, out_features).to(torch.float64)
 
     def forward(self, input):
-        return apply_complex(self.fc_r, self.fc_i, input)
+        return apply_complex(self.fc_r, self.fc_i, input, dtype = input.dtype)
 
 
 class NaiveComplexBatchNorm1d(Module):
